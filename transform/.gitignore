@@ -23,6 +23,7 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+.user.yml
 
 # Environment variables
 .env
