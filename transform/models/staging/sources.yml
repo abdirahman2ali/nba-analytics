@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: nba
+    description: "Raw NBA data from the nba-ingestion-pipeline"
+    database: nba_data
+    schema: nba
+    tables:
+      - name: player_season_averages
+        description: "Player season statistics and averages"
+

@@ -1,0 +1,6 @@
+version: 2
+
+models:
+  - name: example_mart
+    description: "Example mart model - replace with your actual models"
+

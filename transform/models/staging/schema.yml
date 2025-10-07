@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_player_season_averages
+    description: "Staging model for player season statistics - cleaned and standardized"
+    columns:
+      - name: player_season_id
+        description: "Primary key - unique identifier for each player-season record"
+        tests:
+          - unique
+          - not_null
+      
+      - name: player_name
+        description: "Full name of the player"
+        tests:
+          - not_null
+      
+      - name: season
+        description: "NBA season (e.g., 2023-24)"
+        tests:
+          - not_null
+      
+      - name: team_abbreviation
+        description: "Team abbreviation code"
+      
+      - name: games_played
+        description: "Number of games played in the season"
+
