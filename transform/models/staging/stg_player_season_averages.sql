@@ -16,6 +16,7 @@ SELECT
     -- Team information
     team AS team_abbreviation,
     season,
+    CAST(LEFT(season, 4) AS INT) AS season_year,
 
     -- Game statistics
     g AS games_played,

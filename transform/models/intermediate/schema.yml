@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: int_player_season_stats
+    description: "Intermediate model with calculated advanced statistics and efficiency metrics for players"
+    columns:
+      - name: player_season_id
+        description: "Primary key - unique identifier for each player-season record"
+        tests:
+          - unique
+          - not_null
+      
+      - name: player_name
+        description: "Full name of the player"
+        tests:
+          - not_null
+      
+      - name: season
+        description: "NBA season"
+        tests:
+          - not_null
+      
+      - name: points_per_game
+        description: "Average points scored per game"
+      
+      - name: rebounds_per_game
+        description: "Average rebounds per game"
+      
+      - name: assists_per_game
+        description: "Average assists per game"
+      
+      - name: player_efficiency_rating
+        description: "PER -综合效率指标 (points + rebounds + assists + steals + blocks - misses - turnovers) per game"
+      
+      - name: true_shooting_percentage
+        description: "TS% - Shooting efficiency that accounts for 2PT, 3PT, and FT"
+      
+      - name: assist_to_turnover_ratio
+        description: "Ratio of assists to turnovers - higher is better"
+      
+      - name: playing_time_category
+        description: "Classification of playing time (High/Medium/Low based on minutes per game)"
+      
+      - name: scoring_category
+        description: "Classification of scoring ability (Elite/High/Average/Low Scorer)"
+
