@@ -9,10 +9,11 @@ WITH base AS (
     SELECT 
 
         player_season_id,
+        player_id,
         player_name,
         age,
         position,
-        CASE WHEN COUNT(team_abbreviation) OVER (PARTITION BY player_name, season) > 1 
+        CASE WHEN COUNT(team_abbreviation) OVER (PARTITION BY player_id, season) > 1 
             THEN TRUE 
             ELSE FALSE 
         END AS is_two_team_season_flag,

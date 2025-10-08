@@ -9,6 +9,7 @@ SELECT
     id AS player_season_id,
 
     -- Player information
+    player_id,
     player AS player_name,
     age,
     pos AS position,
