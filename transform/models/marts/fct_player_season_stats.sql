@@ -25,9 +25,28 @@ calculated_metrics AS (
         
         -- Game statistics
         games_played,
-        82 as total_games,
         games_started,
         total_minutes_played,
+        
+        -- Season length (varies by year due to lockouts and COVID)
+        CASE 
+            -- Lockout seasons
+            WHEN season_year = 1998 THEN 50  -- 1998-99: Lockout shortened to 50 games
+            WHEN season_year = 2011 THEN 66  -- 2011-12: Lockout shortened to 66 games
+            
+            -- COVID-impacted seasons
+            WHEN season_year = 2019 THEN 72  -- 2019-20: COVID suspended season, resumed in bubble
+            WHEN season_year = 2020 THEN 72  -- 2020-21: COVID shortened season
+            
+            -- Early NBA history (pre-82 game standard)
+            WHEN season_year <= 1960 THEN 72  -- 1950s: approximately 72 games
+            WHEN season_year BETWEEN 1961 AND 1966 THEN 80  -- Early 1960s: 80 games
+            
+            -- Modern NBA (1967-68 onwards)
+            WHEN season_year >= 1967 THEN 82  -- Standard: 82 games
+            
+            ELSE 82  -- Default to standard
+        END AS scheduled_games_in_season,
         
         -- Season totals
         total_points,
@@ -109,6 +128,23 @@ calculated_metrics AS (
         
         -- Games started percentage
         ROUND(CAST(games_started AS NUMERIC) / NULLIF(games_played, 0) * 100, 1) AS games_started_percentage,
+        
+        -- Season participation percentage (games played / total scheduled games)
+        ROUND(
+            CAST(games_played AS NUMERIC) / NULLIF(
+                CASE 
+                    WHEN season_year = 1998 THEN 50
+                    WHEN season_year = 2011 THEN 66
+                    WHEN season_year = 2019 THEN 72
+                    WHEN season_year = 2020 THEN 72
+                    WHEN season_year <= 1960 THEN 72
+                    WHEN season_year BETWEEN 1961 AND 1966 THEN 80
+                    WHEN season_year >= 1967 THEN 82
+                    ELSE 82
+                END, 0
+            ) * 100, 
+            1
+        ) AS season_participation_percentage,
         
         -- Fantasy points (common formula: PTS + 1.2*REB + 1.5*AST + 3*STL + 3*BLK - TOV)
         ROUND(

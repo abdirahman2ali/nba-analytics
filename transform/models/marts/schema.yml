@@ -57,6 +57,12 @@ models:
       - name: games_started_percentage
         description: "Percentage of games started out of games played"
       
+      - name: scheduled_games_in_season
+        description: "Total number of games scheduled in the NBA season (varies by year: 50 for 1998-99 lockout, 66 for 2011-12 lockout, 72 for COVID seasons 2019-20 and 2020-21, 82 standard since 1967-68)"
+      
+      - name: season_participation_percentage
+        description: "Percentage of the season played (games_played / scheduled_games_in_season * 100) - useful for identifying availability and injury impact"
+      
       # Season Totals
       - name: total_minutes_played
         description: "Total minutes played during the season"
