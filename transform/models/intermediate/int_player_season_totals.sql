@@ -24,37 +24,41 @@ WITH base AS (
         -- Game statistics
         games_played,
         games_started,
-        minutes_played,
+        total_minutes_played,
         
-        -- Original shooting stats
-        field_goals_made,
-        field_goals_attempted,
+        -- Shooting stats (season totals)
+        total_field_goals_made,
+        total_field_goals_attempted,
         field_goal_percentage,
-        three_pointers_made,
-        three_pointers_attempted,
+        total_three_pointers_made,
+        total_three_pointers_attempted,
         three_point_percentage,
-        two_pointers_made,
-        two_pointers_attempted,
+        total_two_pointers_made,
+        total_two_pointers_attempted,
         two_point_percentage,
         effective_field_goal_percentage,
-        free_throws_made,
-        free_throws_attempted,
+        total_free_throws_made,
+        total_free_throws_attempted,
         free_throw_percentage,
         
-        -- Original counting stats
-        offensive_rebounds,
-        defensive_rebounds,
+        -- Counting stats (season totals)
+        total_offensive_rebounds,
+        total_defensive_rebounds,
         total_rebounds,
-        assists,
-        steals,
-        blocks,
-        turnovers,
-        personal_fouls,
-        points,
+        total_assists,
+        total_steals,
+        total_blocks,
+        total_turnovers,
+        total_personal_fouls,
+        total_points,
+        
+        -- Performance metrics
+        triple_doubles,
+        
         awards,
         created_at
 
-    FROM {{ ref('stg_player_season_averages') }}
+    FROM {{ ref('stg_player_season_totals') }}
     WHERE games_played > 0 -- Filter out players with no games played
 
 ),

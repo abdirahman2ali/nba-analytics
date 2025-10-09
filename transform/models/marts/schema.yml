@@ -1,6 +1,202 @@
 version: 2
 
 models:
-  - name: example_mart
-    description: "Example mart model - replace with your actual models"
-
+  - name: fct_player_season_stats
+    description: >
+      Analytics-ready fact table containing comprehensive NBA player statistics by season.
+      Includes season totals, per-game averages, advanced metrics, and categorical classifications.
+      This model is optimized for dashboards, BI tools, and analytics use cases.
+    
+    columns:
+      # Identifiers
+      - name: player_season_id
+        description: "Primary key - unique identifier for each player-season record"
+        tests:
+          - unique
+          - not_null
+      
+      - name: player_id
+        description: "Basketball Reference unique player identifier (e.g., jamesle01)"
+        tests:
+          - not_null
+      
+      - name: player_name
+        description: "Full name of the player"
+        tests:
+          - not_null
+      
+      - name: season
+        description: "NBA season in format YYYY-YY (e.g., 2023-24)"
+        tests:
+          - not_null
+      
+      - name: season_year
+        description: "Starting year of the season (e.g., 2023 for 2023-24 season)"
+      
+      - name: age
+        description: "Player's age during the season"
+      
+      - name: position
+        description: "Player's primary position (PG, SG, SF, PF, C)"
+      
+      - name: team_abbreviation
+        description: "Team abbreviation (or '2TM' for players who played for multiple teams)"
+      
+      - name: is_two_team_season_flag
+        description: "Boolean flag indicating if player played for multiple teams"
+      
+      # Game Statistics
+      - name: games_played
+        description: "Number of games played in the season"
+        tests:
+          - not_null
+      
+      - name: games_started
+        description: "Number of games started in the season"
+      
+      - name: games_started_percentage
+        description: "Percentage of games started out of games played"
+      
+      # Season Totals
+      - name: total_minutes_played
+        description: "Total minutes played during the season"
+      
+      - name: total_points
+        description: "Total points scored during the season"
+      
+      - name: total_rebounds
+        description: "Total rebounds during the season"
+      
+      - name: total_offensive_rebounds
+        description: "Total offensive rebounds during the season"
+      
+      - name: total_defensive_rebounds
+        description: "Total defensive rebounds during the season"
+      
+      - name: total_assists
+        description: "Total assists during the season"
+      
+      - name: total_steals
+        description: "Total steals during the season"
+      
+      - name: total_blocks
+        description: "Total blocks during the season"
+      
+      - name: total_turnovers
+        description: "Total turnovers during the season"
+      
+      - name: total_personal_fouls
+        description: "Total personal fouls during the season"
+      
+      - name: triple_doubles
+        description: "Number of triple-doubles achieved during the season"
+      
+      # Per Game Averages
+      - name: points_per_game
+        description: "Average points per game (calculated from season totals)"
+      
+      - name: rebounds_per_game
+        description: "Average rebounds per game"
+      
+      - name: assists_per_game
+        description: "Average assists per game"
+      
+      - name: steals_per_game
+        description: "Average steals per game"
+      
+      - name: blocks_per_game
+        description: "Average blocks per game"
+      
+      - name: turnovers_per_game
+        description: "Average turnovers per game"
+      
+      - name: minutes_per_game
+        description: "Average minutes per game"
+      
+      # Shooting Statistics
+      - name: total_field_goals_made
+        description: "Total field goals made during the season"
+      
+      - name: total_field_goals_attempted
+        description: "Total field goal attempts during the season"
+      
+      - name: field_goal_percentage
+        description: "Field goal percentage (FG / FGA)"
+      
+      - name: total_three_pointers_made
+        description: "Total three-pointers made during the season"
+      
+      - name: total_three_pointers_attempted
+        description: "Total three-point attempts during the season"
+      
+      - name: three_point_percentage
+        description: "Three-point percentage (3P / 3PA)"
+      
+      - name: total_two_pointers_made
+        description: "Total two-pointers made during the season"
+      
+      - name: total_two_pointers_attempted
+        description: "Total two-point attempts during the season"
+      
+      - name: two_point_percentage
+        description: "Two-point percentage (2P / 2PA)"
+      
+      - name: total_free_throws_made
+        description: "Total free throws made during the season"
+      
+      - name: total_free_throws_attempted
+        description: "Total free throw attempts during the season"
+      
+      - name: free_throw_percentage
+        description: "Free throw percentage (FT / FTA)"
+      
+      - name: effective_field_goal_percentage
+        description: "Effective field goal percentage - adjusts for 3PT being worth more (FG + 0.5 * 3P) / FGA"
+      
+      # Advanced Metrics
+      - name: true_shooting_percentage
+        description: "True shooting percentage - comprehensive shooting efficiency metric accounting for 2PT, 3PT, and FT"
+      
+      - name: assist_to_turnover_ratio
+        description: "Ratio of assists to turnovers - higher is better for ball handlers"
+      
+      - name: usage_rate_per_game
+        description: "Estimated usage rate per game - measures scoring load"
+      
+      - name: rebounds_per_36_minutes
+        description: "Rebounds per 36 minutes - pace-adjusted rebounding"
+      
+      - name: assists_per_36_minutes
+        description: "Assists per 36 minutes - pace-adjusted playmaking"
+      
+      - name: points_per_36_minutes
+        description: "Points per 36 minutes - pace-adjusted scoring"
+      
+      - name: offensive_rating
+        description: "Offensive rating approximation - points per 100 possessions"
+      
+      - name: total_fantasy_points
+        description: "Total fantasy points using standard formula (PTS + 1.2*REB + 1.5*AST + 3*STL + 3*BLK - TOV)"
+      
+      # Categorical Classifications
+      - name: playing_time_category
+        description: "Classification of playing time (Starter - High Minutes, Starter - Regular Minutes, Rotation Player, Bench Player, Deep Bench)"
+      
+      - name: scoring_category
+        description: "Classification of scoring ability (Elite Scorer, High Scorer, Above Average Scorer, Role Player Scorer, Low Volume Scorer)"
+      
+      - name: player_role
+        description: "Classification of player role based on position and stats (Primary Playmaker, Scoring Guard, Forward Rebounder, Rim Protector, etc.)"
+      
+      - name: efficiency_tier
+        description: "Classification of shooting efficiency based on true shooting percentage"
+      
+      - name: three_point_shooting_category
+        description: "Classification of three-point shooting ability (Elite/Good/Average/Poor 3PT Shooter, Occasional, Non 3PT Shooter)"
+      
+      # Metadata
+      - name: awards
+        description: "Awards won during the season (if any)"
+      
+      - name: created_at
+        description: "Timestamp when the record was created in the source system"

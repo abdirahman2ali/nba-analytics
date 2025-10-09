@@ -1,13 +1,18 @@
 version: 2
 
 models:
-  - name: int_player_season_stats
-    description: "Intermediate model with calculated advanced statistics and efficiency metrics for players"
+  - name: int_player_season_totals
+    description: "Intermediate model with season totals for players, handling multi-team seasons by using combined (2TM) stats. Contains season totals (not per-game averages) for all statistical categories."
     columns:
       - name: player_season_id
         description: "Primary key - unique identifier for each player-season record"
         tests:
           - unique
+          - not_null
+      
+      - name: player_id
+        description: "Basketball Reference unique player identifier"
+        tests:
           - not_null
       
       - name: player_name
@@ -20,27 +25,21 @@ models:
         tests:
           - not_null
       
-      - name: points_per_game
-        description: "Average points scored per game"
+      - name: is_two_team_season_flag
+        description: "Boolean flag indicating if player played for multiple teams in the season"
       
-      - name: rebounds_per_game
-        description: "Average rebounds per game"
+      - name: total_points
+        description: "Total points scored in the season"
       
-      - name: assists_per_game
-        description: "Average assists per game"
+      - name: total_rebounds
+        description: "Total rebounds in the season"
       
-      - name: player_efficiency_rating
-        description: "PER -综合效率指标 (points + rebounds + assists + steals + blocks - misses - turnovers) per game"
+      - name: total_assists
+        description: "Total assists in the season"
       
-      - name: true_shooting_percentage
-        description: "TS% - Shooting efficiency that accounts for 2PT, 3PT, and FT"
+      - name: triple_doubles
+        description: "Number of triple-doubles achieved in the season"
       
-      - name: assist_to_turnover_ratio
-        description: "Ratio of assists to turnovers - higher is better"
-      
-      - name: playing_time_category
-        description: "Classification of playing time (High/Medium/Low based on minutes per game)"
-      
-      - name: scoring_category
-        description: "Classification of scoring ability (Elite/High/Average/Low Scorer)"
+      - name: games_played
+        description: "Number of games played in the season"
 

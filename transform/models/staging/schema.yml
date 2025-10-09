@@ -1,13 +1,18 @@
 version: 2
 
 models:
-  - name: stg_player_season_averages
-    description: "Staging model for player season statistics - cleaned and standardized"
+  - name: stg_player_season_totals
+    description: "Staging model for player season totals - cleaned and standardized. Contains season totals (not per-game averages) for all statistical categories."
     columns:
       - name: player_season_id
         description: "Primary key - unique identifier for each player-season record"
         tests:
           - unique
+          - not_null
+      
+      - name: player_id
+        description: "Basketball Reference unique player identifier (e.g., jamesle01)"
+        tests:
           - not_null
       
       - name: player_name
@@ -25,4 +30,16 @@ models:
       
       - name: games_played
         description: "Number of games played in the season"
+      
+      - name: total_points
+        description: "Total points scored in the season"
+      
+      - name: total_assists
+        description: "Total assists in the season"
+      
+      - name: total_rebounds
+        description: "Total rebounds in the season"
+      
+      - name: triple_doubles
+        description: "Number of triple-doubles achieved in the season"
 
