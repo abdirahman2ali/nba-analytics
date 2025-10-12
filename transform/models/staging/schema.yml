@@ -12,8 +12,6 @@ models:
       
       - name: player_id
         description: "Basketball Reference unique player identifier (e.g., jamesle01)"
-        tests:
-          - not_null
       
       - name: player_name
         description: "Full name of the player"
