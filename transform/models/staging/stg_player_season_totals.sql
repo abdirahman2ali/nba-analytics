@@ -64,4 +64,4 @@ SELECT
     awards,
     created_at
 
-FROM {{ source('nba', 'player_season_averages') }}
+FROM {{ source('nba', 'player_season_totals') }}
