@@ -95,6 +95,15 @@ def ensure_table(engine, table_name: str = "player_season_totals") -> None:
         conn.commit()
 
 
+def get_last_loaded_year(engine, table_name: str = "player_season_totals"):
+    """Return the season end year of the most recently loaded season, or None if the table is empty."""
+    with engine.connect() as conn:
+        result = conn.execute(
+            text(f"SELECT MAX(CAST(LEFT(season, 4) AS INT) + 1) FROM nba.{table_name}")
+        )
+        return result.fetchone()[0]
+
+
 def write_to_db(df: pd.DataFrame, engine, table_name: str = "player_season_totals") -> None:
     """Append a DataFrame to the target table."""
     df.to_sql(

@@ -1,20 +1,33 @@
 import time
+from datetime import date
 from dotenv import load_dotenv
 
 from nba_ingestion.scraper import get_season_stats
 from nba_ingestion.transformer import prepare_for_db
-from nba_ingestion.loader import get_engine, ensure_schema, ensure_table, write_to_db
+from nba_ingestion.loader import get_engine, ensure_schema, ensure_table, write_to_db, get_last_loaded_year
 
 load_dotenv()
 
 START_YEAR = 1950
-END_YEAR = 2025
 TABLE_NAME = "player_season_totals"
 REQUEST_DELAY = 6       # seconds between successful requests
 RETRY_DELAY = 120       # seconds to wait after a 429 before retrying
 MAX_RETRIES = 3
 
 
+def last_complete_season_year() -> int:
+    """Return the end year of the last fully completed NBA season.
+
+    NBA seasons end in June. September is when stats are finalized and
+    the new season has not yet started, so running in September will
+    always capture a complete season.
+
+    Examples:
+        Called in September 2026 → returns 2026 (2025-26 season complete)
+        Called in March 2026    → returns 2025 (2025-26 still in progress)
+    """
+    today = date.today()
+    return today.year if today.month >= 9 else today.year - 1
 def fetch_with_retry(year: int) -> object:
     """Fetch season stats with retry logic on 429 rate-limit responses."""
     for attempt in range(1, MAX_RETRIES + 1):
@@ -28,10 +41,21 @@ def fetch_with_retry(year: int) -> object:
                 raise
 
 
-def run(start_year: int = START_YEAR, end_year: int = END_YEAR, table_name: str = TABLE_NAME):
+def run(start_year=None, end_year: int = None, table_name: str = TABLE_NAME):
     engine = get_engine()
     ensure_schema(engine)
     ensure_table(engine, table_name)
+
+    if end_year is None:
+        end_year = last_complete_season_year()
+
+    if start_year is None:
+        last_loaded = get_last_loaded_year(engine, table_name)
+        start_year = START_YEAR if last_loaded is None else last_loaded + 1
+
+    if start_year > end_year:
+        print("Already up to date.")
+        return
 
     successful = 0
     failed = []
@@ -66,5 +90,5 @@ def run(start_year: int = START_YEAR, end_year: int = END_YEAR, table_name: str 
 
 if __name__ == "__main__":
     import sys
-    start = int(sys.argv[1]) if len(sys.argv) > 1 else START_YEAR
+    start = int(sys.argv[1]) if len(sys.argv) > 1 else None
     run(start_year=start)
