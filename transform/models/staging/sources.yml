@@ -6,6 +6,6 @@ sources:
     database: nba_data
     schema: nba
     tables:
-      - name: player_season_averages
-        description: "Player season statistics and averages"
+      - name: player_season_totals
+        description: "Raw player season totals scraped from Basketball Reference"
 

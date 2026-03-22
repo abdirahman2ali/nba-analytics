@@ -1,161 +1,165 @@
-# 🏀 NBA Analytics dbt Project
+# NBA Analytics dbt Project
 
-A comprehensive data transformation pipeline for NBA player statistics, built with dbt (data build tool). This project transforms raw NBA player data into clean, analytics-ready datasets for advanced basketball analysis and insights.
+A data transformation pipeline for NBA player statistics built with dbt. Transforms raw scraped data into analytics-ready datasets covering every season from 1950 to present.
 
-## 📊 Project Overview
+Part of a three-project analytics portfolio: [nba-ingestion-pipeline](https://github.com/abdirahman2ali/nba-ingestion-pipeline) → **nba-dbt** → nba-evidence (BI layer).
 
-This dbt project processes NBA player season statistics through a multi-layered transformation pipeline. It handles complex scenarios like mid-season trades, calculates advanced metrics, and prepares data for downstream analytics and reporting.
+---
 
-### What This Project Does
+## What This Project Does
 
-- **Standardizes raw NBA data** with consistent naming conventions and data types
-- **Handles multi-team seasons** when players are traded during a season
-- **Calculates advanced metrics** like PER, true shooting percentage, and efficiency ratings
-- **Creates analytics-ready datasets** for dashboards, reports, and machine learning models
-- **Maintains data quality** through comprehensive testing and validation
+- Standardizes raw player season totals with consistent column names and data types
+- Handles mid-season trades (collapses multi-team records into one row per player-season)
+- Calculates advanced metrics: True Shooting %, Per-36 stats, usage rate, offensive rating
+- Categorizes players by role, scoring output, playing time, and efficiency tier
+- Validates data quality with custom and generic dbt tests
 
-### Use Cases
+---
 
-- **Player Performance Analysis**: Compare players across seasons and teams
-- **Team Analytics**: Evaluate team composition and player contributions
-- **Fantasy Basketball**: Generate rankings and projections
-- **Contract Evaluation**: Assess player value using advanced metrics
-- **Historical Trends**: Track player development and career trajectories
-- **Predictive Modeling**: Build ML models for performance forecasting
-
-## 🏗️ Data Pipeline Architecture
+## Data Pipeline
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Raw Data Source (nba.player_season_averages)               │
-│  - Player season totals from Basketball Reference scraper   │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STAGING LAYER                                              │
-│  ├─ stg_player_season_totals                               │
-│  │  - Renames columns to clear, descriptive names          │
-│  │  - Standardizes data types                              │
-│  │  - Light cleaning (e.g., g → games_played)              │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│  INTERMEDIATE LAYER                                         │
-│  ├─ int_player_season_totals                               │
-│  │  - Consolidates multi-team season records (2TM)         │
-│  │  - One record per player per season                     │
-│  │  - Handles traded players correctly                     │
-│  │  - Filters players with 0 games played                  │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│  MARTS LAYER                                                │
-│  ├─ fct_player_season_stats                                │
-│  │  - Analytics-ready fact table                           │
-│  │  - Per-game averages calculated from totals             │
-│  │  - Advanced metrics (TS%, PER-36, usage rate, etc.)     │
-│  │  - Player categorizations and role classifications      │
-│  │  - Season context (lockouts, COVID adjustments)         │
-└─────────────────────────────────────────────────────────────┘
+Raw Source (nba.player_season_averages)
+        |
+        v
+Staging: stg_player_season_totals  [view]
+  - Rename columns, standardize types
+        |
+        v
+Intermediate: int_player_season_totals  [table]
+  - One row per player-season
+  - Multi-team season handling (2TM)
+  - Filter 0-game records
+        |
+        v
+Mart: fct_player_season_stats  [table]
+  - Per-game averages
+  - Advanced metrics (TS%, PER-36, usage rate)
+  - Player categorizations
+  - Fantasy scoring
 ```
 
-## 📁 Project Structure
+---
+
+## Project Structure
 
 ```
 nba-dbt/
 ├── models/
-│   ├── staging/                    # Raw data cleaning layer
-│   │   ├── sources.yml            # Source table definitions
-│   │   ├── schema.yml             # Model documentation & tests
+│   ├── staging/
+│   │   ├── sources.yml
+│   │   ├── schema.yml
 │   │   └── stg_player_season_totals.sql
-│   │
-│   ├── intermediate/               # Business logic layer
+│   ├── intermediate/
 │   │   ├── schema.yml
 │   │   └── int_player_season_totals.sql
-│   │
-│   └── marts/                      # Analytics-ready datasets
+│   └── marts/
 │       ├── schema.yml
 │       └── fct_player_season_stats.sql
-│
-├── tests/                          # Custom data tests
-│   ├── made_not_greater_than_attempted.sql
+├── tests/
 │   ├── field_goals_match_components.sql
+│   ├── made_not_greater_than_attempted.sql
 │   ├── rebounds_match_components.sql
 │   └── games_started_not_greater_than_played.sql
-│
-├── macros/                         # Reusable SQL functions
-├── seeds/                          # Static reference data (CSV)
-├── snapshots/                      # Slowly changing dimensions
-├── analyses/                       # Ad-hoc analytical queries
-│
-├── dbt_project.yml                # Project configuration
-├── packages.yml                    # dbt package dependencies
-└── profiles.yml                    # Database connection config
+├── dbt_project.yml
+├── packages.yml
+└── profiles.example.yml
 ```
-
-## 📈 Data Models
-
-### Staging Models
-
-#### `stg_player_season_totals`
-- **Materialization**: View
-- **Purpose**: Standardizes raw player season totals with clear column names
-- **Key Transformations**:
-  - Renames cryptic abbreviations (e.g., `fg` → `total_field_goals_made`, `g` → `games_played`)
-  - Adds `season_year` field extracted from season string
-  - Maintains all original statistics for full traceability
-  - No filtering or aggregation at this stage
-
-### Intermediate Models
-
-#### `int_player_season_totals`
-- **Materialization**: Table
-- **Purpose**: One clean record per player per season with proper multi-team handling
-- **Key Logic**:
-  - **Multi-Team Season Handling**: When players are traded mid-season, Basketball Reference shows:
-    - Individual stats for each team
-    - A combined "2TM" (two-team) record with season totals
-  - This model selects the "2TM" aggregate for traded players
-  - Ensures no double-counting in downstream analytics
-  - Adds `is_two_team_season_flag` for easy identification
-- **Filters**: Excludes players with 0 games played
-
-### Marts Models
-
-#### `fct_player_season_stats`
-- **Materialization**: Table
-- **Purpose**: Analytics-ready fact table with comprehensive player statistics and advanced metrics
-- **Key Features**:
-  - **Per-Game Averages**: Calculated from season totals (PPG, RPG, APG, etc.)
-  - **Advanced Metrics**:
-    - True Shooting Percentage (TS%)
-    - Per-36 minute stats (points, rebounds, assists)
-    - Assist-to-Turnover Ratio
-    - Usage Rate per game
-    - Offensive Rating approximation
-  - **Historical Context**:
-    - Season-specific game schedules (handles lockouts, COVID seasons)
-    - Season participation percentage
-  - **Player Categorizations**:
-    - Playing time categories (Starter, Rotation, Bench, etc.)
-    - Scoring categories (Elite, High, Above Average, etc.)
-    - Player roles (Primary Playmaker, Scoring Guard, Rim Protector, etc.)
-    - Efficiency tiers based on TS%
-    - Three-point shooting categories
-  - **Fantasy Points**: Standard fantasy basketball scoring formula
-
-## 📚 Resources
-
-- [dbt Documentation](https://docs.getdbt.com/)
-- [dbt Best Practices](https://docs.getdbt.com/guides/best-practices)
-- [Basketball Reference](https://www.basketball-reference.com/) (data source reference)
-
-## 📄 License
-
-This project is for educational and analytical purposes.
 
 ---
 
+## Setup
+
+### Prerequisites
+
+- Python 3.9+
+- PostgreSQL database populated by [nba-ingestion-pipeline](https://github.com/abdirahman2ali/nba-ingestion-pipeline)
+
+### Install dbt
+
+```bash
+pip install dbt-postgres
+```
+
+### Configure database connection
+
+Copy the example profiles file to your dbt home directory:
+
+```bash
+cp profiles.example.yml ~/.dbt/profiles.yml
+```
+
+Edit `~/.dbt/profiles.yml` and fill in your database credentials. The project name is `nba_dbt`.
+
+### Install dbt packages
+
+```bash
+dbt deps
+```
+
+### Run the pipeline
+
+```bash
+dbt run
+```
+
+### Run tests
+
+```bash
+dbt test
+```
+
+### Generate docs
+
+```bash
+dbt docs generate
+dbt docs serve
+```
+
+---
+
+## Models
+
+### `stg_player_season_totals`
+Cleans the raw source table. Renames cryptic Basketball Reference abbreviations to full column names (e.g. `fg` → `total_field_goals_made`, `g` → `games_played`). No filtering or aggregation.
+
+### `int_player_season_totals`
+Produces one row per player-season. Basketball Reference includes separate rows for each team a player played for plus a combined "2TM" aggregate. This model keeps only the combined row for traded players and removes records with 0 games played.
+
+### `fct_player_season_stats`
+Analytics-ready fact table with 64 columns. Key additions over the intermediate layer:
+
+- Per-game averages (PPG, RPG, APG, SPG, BPG)
+- True Shooting % (TS%)
+- Per-36 minute stats
+- Assist-to-turnover ratio
+- Usage rate
+- Offensive rating approximation
+- Fantasy points
+- Player role, scoring, efficiency, and playing-time categories
+- Season participation % (accounts for lockout and COVID-shortened seasons)
+
+---
+
+## Data Quality Tests
+
+### Generic tests (schema.yml)
+- `unique` and `not_null` on primary keys at every layer
+
+### Custom tests (tests/)
+- `field_goals_match_components` — total FG = 2PT + 3PT made
+- `made_not_greater_than_attempted` — made shots never exceed attempts
+- `rebounds_match_components` — total rebounds = offensive + defensive
+- `games_started_not_greater_than_played` — starts never exceed games played
+
+---
+
+## Source Data
+
+Raw data is loaded by [nba-ingestion-pipeline](https://github.com/abdirahman2ali/nba-ingestion-pipeline), which scrapes Basketball Reference and writes to `nba.player_season_averages`.
+
+---
+
+## License
+
+MIT
