@@ -11,23 +11,23 @@ SAMPLE_HTML = """
   <thead><tr><th>Player</th><th>Age</th><th>Tm</th><th>Pos</th><th>G</th><th>PTS</th></tr></thead>
   <tbody>
     <tr>
-      <td data-stat="player"><a href="/players/j/jamesle01.html">LeBron James</a></td>
+      <td data-stat="name_display" data-append-csv="jamesle01">LeBron James</td>
       <td data-stat="age">39</td>
-      <td data-stat="team_id">LAL</td>
+      <td data-stat="team_name_abbr">LAL</td>
       <td data-stat="pos">SF</td>
       <td data-stat="g">71</td>
       <td data-stat="pts">1769</td>
     </tr>
     <tr>
-      <td data-stat="player"><a href="/players/c/curryst01.html">Stephen Curry</a></td>
+      <td data-stat="name_display" data-append-csv="curryst01">Stephen Curry</td>
       <td data-stat="age">35</td>
-      <td data-stat="team_id">GSW</td>
+      <td data-stat="team_name_abbr">GSW</td>
       <td data-stat="pos">PG</td>
       <td data-stat="g">74</td>
       <td data-stat="pts">1886</td>
     </tr>
     <tr>
-      <td data-stat="player" class="thead">Player</td>
+      <td data-stat="name_display" class="thead">Player</td>
     </tr>
   </tbody>
 </table>
