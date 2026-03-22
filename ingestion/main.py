@@ -10,8 +10,8 @@ load_dotenv()
 START_YEAR = 1950
 END_YEAR = 2025
 TABLE_NAME = "player_season_totals"
-REQUEST_DELAY = 4       # seconds between successful requests
-RETRY_DELAY = 60        # seconds to wait after a 429 before retrying
+REQUEST_DELAY = 6       # seconds between successful requests
+RETRY_DELAY = 120       # seconds to wait after a 429 before retrying
 MAX_RETRIES = 3
 
 
