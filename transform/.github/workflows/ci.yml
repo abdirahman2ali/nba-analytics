@@ -1,0 +1,56 @@
+name: dbt CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  dbt-ci:
+    runs-on: ubuntu-latest
+
+    env:
+      PGHOST: ${{ secrets.PGHOST }}
+      PGDATABASE: ${{ secrets.PGDATABASE }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      PGPORT: ${{ secrets.PGPORT }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        run: pip install dbt-postgres
+
+      - name: Install dbt packages
+        run: dbt deps
+
+      - name: Write profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          nba_dbt:
+            target: ci
+            outputs:
+              ci:
+                type: postgres
+                host: "${PGHOST}"
+                port: ${PGPORT:-5432}
+                dbname: "${PGDATABASE}"
+                user: "${PGUSER}"
+                password: "${PGPASSWORD}"
+                schema: nba
+                threads: 4
+                sslmode: require
+          EOF
+
+      - name: dbt compile
+        run: dbt compile
+
+      - name: dbt test
+        run: dbt test
