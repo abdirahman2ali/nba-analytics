@@ -1,5 +1,4 @@
 import time
-import requests
 from dotenv import load_dotenv
 
 from nba_ingestion.scraper import get_season_stats
