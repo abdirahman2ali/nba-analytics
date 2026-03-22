@@ -1,0 +1,31 @@
+name: Seasonal Data Load
+
+on:
+  schedule:
+    - cron: "0 9 1 9 *"  # September 1st at 9 AM UTC every year
+  workflow_dispatch:       # allow manual trigger if needed
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+
+    env:
+      PGHOST: ${{ secrets.PGHOST }}
+      PGDATABASE: ${{ secrets.PGDATABASE }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      PGPORT: ${{ secrets.PGPORT }}
+      PGSSLMODE: require
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run incremental load
+        run: python3 main.py
