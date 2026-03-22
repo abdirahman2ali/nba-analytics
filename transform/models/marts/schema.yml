@@ -177,7 +177,13 @@ models:
       
       - name: points_per_36_minutes
         description: "Points per 36 minutes - pace-adjusted scoring"
-      
+
+      - name: steals_per_36_minutes
+        description: "Steals per 36 minutes - pace-adjusted defensive stat"
+
+      - name: blocks_per_36_minutes
+        description: "Blocks per 36 minutes - pace-adjusted rim protection stat"
+
       - name: offensive_rating
         description: "Offensive rating approximation - points per 100 possessions"
       
@@ -199,10 +205,138 @@ models:
       
       - name: three_point_shooting_category
         description: "Classification of three-point shooting ability (Elite/Good/Average/Poor 3PT Shooter, Occasional, Non 3PT Shooter)"
-      
+
+      - name: primary_position
+        description: "Primary position extracted from compound position strings (e.g., PG from PG-SG)"
+
+      # Season Rankings
+      - name: ppg_rank_in_season
+        description: "Player's PPG rank within their season (1 = highest scorer)"
+
+      - name: rpg_rank_in_season
+        description: "Player's RPG rank within their season (1 = top rebounder)"
+
+      - name: apg_rank_in_season
+        description: "Player's APG rank within their season (1 = top assist leader)"
+
+      - name: ppg_percentile
+        description: "Player's PPG percentile within their season (100 = top scorer)"
+
+      - name: rpg_percentile
+        description: "Player's RPG percentile within their season (100 = top rebounder)"
+
+      - name: apg_percentile
+        description: "Player's APG percentile within their season (100 = top assist leader)"
+
       # Metadata
       - name: awards
         description: "Awards won during the season (if any)"
       
       - name: created_at
         description: "Timestamp when the record was created in the source system"
+
+  - name: fct_season_league_averages
+    description: >
+      Season-level league aggregates from 1950 to present. Filters to players with >= 20 games played.
+      Powers the historical trend page: PPG over time, 3PT revolution, scoring by era.
+
+    columns:
+      - name: season
+        description: "NBA season in format YYYY-YY"
+        tests:
+          - unique
+          - not_null
+      - name: season_year
+        description: "End year of the season"
+      - name: scheduled_games_in_season
+        description: "Total scheduled games in the season (accounts for lockouts and COVID)"
+      - name: player_count
+        description: "Number of players with >= 20 games played"
+      - name: avg_ppg
+        description: "League average points per game"
+      - name: avg_rpg
+        description: "League average rebounds per game"
+      - name: avg_apg
+        description: "League average assists per game"
+      - name: avg_spg
+        description: "League average steals per game"
+      - name: avg_bpg
+        description: "League average blocks per game"
+      - name: avg_ts_pct
+        description: "League average true shooting percentage"
+      - name: avg_fg_pct
+        description: "League average field goal percentage"
+      - name: avg_3pt_pct
+        description: "League average three-point percentage"
+      - name: avg_ft_pct
+        description: "League average free throw percentage"
+      - name: avg_efg_pct
+        description: "League average effective field goal percentage"
+      - name: total_3pa_league
+        description: "Total three-point attempts across all qualifying players in the season"
+      - name: total_3pm_league
+        description: "Total three-pointers made across all qualifying players in the season"
+      - name: avg_3pa_per_game
+        description: "Average three-point attempts per game per player"
+      - name: max_ppg_in_season
+        description: "Highest PPG recorded by any qualifying player in the season"
+      - name: max_rpg_in_season
+        description: "Highest RPG recorded by any qualifying player in the season"
+      - name: max_apg_in_season
+        description: "Highest APG recorded by any qualifying player in the season"
+
+  - name: dim_player_career_stats
+    description: >
+      Career aggregates per player across all seasons. TS% is calculated from career totals
+      (not an average of season percentages). Powers career leaderboards and player comparison views.
+
+    columns:
+      - name: player_id
+        description: "Basketball Reference unique player identifier"
+        tests:
+          - unique
+          - not_null
+      - name: player_name
+        description: "Full player name"
+        tests:
+          - not_null
+      - name: first_season_year
+        description: "First season year the player appeared"
+      - name: last_season_year
+        description: "Last season year the player appeared"
+      - name: seasons_played
+        description: "Total number of seasons in the dataset"
+      - name: career_games_played
+        description: "Total career games played"
+      - name: career_total_points
+        description: "Career total points"
+      - name: career_total_rebounds
+        description: "Career total rebounds"
+      - name: career_total_assists
+        description: "Career total assists"
+      - name: career_total_steals
+        description: "Career total steals"
+      - name: career_total_blocks
+        description: "Career total blocks"
+      - name: career_total_turnovers
+        description: "Career total turnovers"
+      - name: career_triple_doubles
+        description: "Career total triple-doubles"
+      - name: career_ppg
+        description: "Career points per game"
+      - name: career_rpg
+        description: "Career rebounds per game"
+      - name: career_apg
+        description: "Career assists per game"
+      - name: career_spg
+        description: "Career steals per game"
+      - name: career_bpg
+        description: "Career blocks per game"
+      - name: career_true_shooting_pct
+        description: "Career true shooting percentage calculated from career totals"
+      - name: best_season_ppg
+        description: "Highest single-season PPG across career"
+      - name: best_season_rpg
+        description: "Highest single-season RPG across career"
+      - name: best_season_apg
+        description: "Highest single-season APG across career"

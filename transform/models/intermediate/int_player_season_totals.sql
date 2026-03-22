@@ -1,31 +1,25 @@
-{{
-    config(
-        materialized='table'
-    )
-}}
-
 WITH base AS (
 
-    SELECT 
+    SELECT
 
         player_season_id,
         player_id,
         player_name,
         age,
         position,
-        CASE WHEN COUNT(team_abbreviation) OVER (PARTITION BY player_id, season) > 1 
-            THEN TRUE 
-            ELSE FALSE 
+        CASE WHEN COUNT(team_abbreviation) OVER (PARTITION BY player_id, season) > 1
+            THEN TRUE
+            ELSE FALSE
         END AS is_two_team_season_flag,
         team_abbreviation,
         season,
         season_year,
-        
+
         -- Game statistics
         games_played,
         games_started,
         total_minutes_played,
-        
+
         -- Shooting stats (season totals)
         total_field_goals_made,
         total_field_goals_attempted,
@@ -40,7 +34,7 @@ WITH base AS (
         total_free_throws_made,
         total_free_throws_attempted,
         free_throw_percentage,
-        
+
         -- Counting stats (season totals)
         total_offensive_rebounds,
         total_defensive_rebounds,
@@ -51,10 +45,10 @@ WITH base AS (
         total_turnovers,
         total_personal_fouls,
         total_points,
-        
+
         -- Performance metrics
         triple_doubles,
-        
+
         awards,
         created_at
 
@@ -74,14 +68,14 @@ players_multi_team_season AS (
 
     SELECT * FROM base
     WHERE is_two_team_season_flag = TRUE
-    AND team_abbreviation = '2TM' -- 2TM means the player played for two teams in the same season and average stats for both teams
+    AND team_abbreviation = '2TM' -- 2TM row contains combined season totals for players who changed teams mid-season
 
 ),
 
 union_seasons AS (
 
     SELECT * FROM players_one_team_season
-    UNION
+    UNION ALL
     SELECT * FROM players_multi_team_season
 
 )
