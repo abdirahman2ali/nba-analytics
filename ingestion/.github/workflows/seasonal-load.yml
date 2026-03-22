@@ -29,3 +29,39 @@ jobs:
 
       - name: Run incremental load
         run: python3 main.py
+
+      - name: Check out nba-dbt
+        uses: actions/checkout@v4
+        with:
+          repository: abdirahman2ali/nba-dbt
+          path: nba-dbt
+
+      - name: Install dbt
+        run: pip install dbt-postgres
+
+      - name: Write dbt profiles
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          nba_dbt:
+            target: prod
+            outputs:
+              prod:
+                type: postgres
+                host: "${PGHOST}"
+                port: ${PGPORT:-5432}
+                dbname: "${PGDATABASE}"
+                user: "${PGUSER}"
+                password: "${PGPASSWORD}"
+                schema: nba
+                threads: 4
+                sslmode: require
+          EOF
+
+      - name: Install dbt packages
+        working-directory: nba-dbt
+        run: dbt deps
+
+      - name: Run dbt
+        working-directory: nba-dbt
+        run: dbt run
