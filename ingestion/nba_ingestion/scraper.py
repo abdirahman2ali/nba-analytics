@@ -51,13 +51,16 @@ def get_season_stats(season_end_year: int) -> pd.DataFrame:
 
 
 def _extract_player_ids(table) -> list:
-    """Extract Basketball Reference player IDs from the href links in a stats table."""
+    """Extract Basketball Reference player IDs from the stats table.
+
+    Basketball Reference stores the player ID in the data-append-csv attribute
+    of the name_display cell (e.g. data-append-csv="jamesle01").
+    """
     player_ids = []
     for row in table.find("tbody").find_all("tr"):
-        cell = row.find("td", {"data-stat": "player"})
-        if cell and cell.find("a"):
-            href = cell.find("a").get("href", "")
-            player_id = href.split("/")[-1].replace(".html", "") if href else None
+        cell = row.find("td", {"data-stat": "name_display"})
+        if cell:
+            player_id = cell.get("data-append-csv") or None
         else:
             player_id = None
         player_ids.append(player_id)
