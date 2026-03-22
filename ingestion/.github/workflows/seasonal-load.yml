@@ -1,0 +1,67 @@
+name: Seasonal Data Load
+
+on:
+  schedule:
+    - cron: "0 9 1 9 *"  # September 1st at 9 AM UTC every year
+  workflow_dispatch:       # allow manual trigger if needed
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+
+    env:
+      PGHOST: ${{ secrets.PGHOST }}
+      PGDATABASE: ${{ secrets.PGDATABASE }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      PGPORT: ${{ secrets.PGPORT }}
+      PGSSLMODE: require
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run incremental load
+        run: python3 main.py
+
+      - name: Check out nba-dbt
+        uses: actions/checkout@v4
+        with:
+          repository: abdirahman2ali/nba-dbt
+          path: nba-dbt
+
+      - name: Install dbt
+        run: pip install dbt-postgres
+
+      - name: Write dbt profiles
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<EOF
+          nba_dbt:
+            target: prod
+            outputs:
+              prod:
+                type: postgres
+                host: "${PGHOST}"
+                port: ${PGPORT:-5432}
+                dbname: "${PGDATABASE}"
+                user: "${PGUSER}"
+                password: "${PGPASSWORD}"
+                schema: nba
+                threads: 4
+                sslmode: require
+          EOF
+
+      - name: Install dbt packages
+        working-directory: nba-dbt
+        run: dbt deps
+
+      - name: Run dbt
+        working-directory: nba-dbt
+        run: dbt run
