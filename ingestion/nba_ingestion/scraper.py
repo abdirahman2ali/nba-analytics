@@ -60,7 +60,7 @@ def _extract_player_ids(table) -> list:
     for row in table.find("tbody").find_all("tr"):
         cell = row.find("td", {"data-stat": "name_display"})
         if cell:
-            player_id = cell.get("data-append-csv") or None
+            player_id = cell.get("data-append-csv")
         else:
             player_id = None
         player_ids.append(player_id)

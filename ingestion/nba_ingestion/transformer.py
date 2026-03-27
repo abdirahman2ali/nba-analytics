@@ -1,10 +1,15 @@
 import pandas as pd
 
 
+def season_label(year: int) -> str:
+    """Return the season label for a given end year (e.g., 2024 -> '2023-24')."""
+    return f"{year - 1}-{str(year)[-2:]}"
+
+
 def add_season_column(df: pd.DataFrame, season_end_year: int) -> pd.DataFrame:
     """Add a SEASON column in 'YYYY-YY' format (e.g., '2023-24')."""
     df = df.copy()
-    df["SEASON"] = f"{season_end_year - 1}-{str(season_end_year)[-2:]}"
+    df["SEASON"] = season_label(season_end_year)
     return df
 
 
