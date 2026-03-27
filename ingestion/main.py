@@ -1,9 +1,10 @@
 import time
 from datetime import date
+import pandas as pd
 from dotenv import load_dotenv
 
 from nba_ingestion.scraper import get_season_stats
-from nba_ingestion.transformer import prepare_for_db
+from nba_ingestion.transformer import prepare_for_db, season_label
 from nba_ingestion.loader import get_engine, ensure_schema, ensure_table, write_to_db, get_last_loaded_year
 
 load_dotenv()
@@ -28,7 +29,9 @@ def last_complete_season_year() -> int:
     """
     today = date.today()
     return today.year if today.month >= 9 else today.year - 1
-def fetch_with_retry(year: int) -> object:
+
+
+def fetch_with_retry(year: int) -> pd.DataFrame:
     """Fetch season stats with retry logic on 429 rate-limit responses."""
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -62,24 +65,24 @@ def run(start_year=None, end_year: int = None, table_name: str = TABLE_NAME):
 
     for year in range(start_year, end_year + 1):
         try:
-            print(f"Fetching {year - 1}-{str(year)[-2:]} season... ", end="", flush=True)
+            print(f"Fetching {season_label(year)} season... ", end="", flush=True)
             df = fetch_with_retry(year)
 
-            if df is None or df.empty:
+            if df.empty:
                 print("no data")
                 failed.append(year)
-                time.sleep(REQUEST_DELAY)
                 continue
 
             df_db = prepare_for_db(df, year)
             write_to_db(df_db, engine, table_name)
             print(f"{len(df):,} players saved")
             successful += 1
-            time.sleep(REQUEST_DELAY)
 
         except Exception as e:
             print(f"error: {e}")
             failed.append(year)
+
+        finally:
             time.sleep(REQUEST_DELAY)
 
     total = end_year - start_year + 1
