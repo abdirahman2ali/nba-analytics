@@ -49,36 +49,18 @@ CREATE INDEX IF NOT EXISTS idx_season ON nba.{table_name}(season);
 """
 
 
-def get_connection_string() -> str:
-    """
-    Build a PostgreSQL connection string from environment variables.
-
-    Prefers DATABASE_URL if set. Falls back to individual PG* variables.
-    """
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        return database_url
-
-    host = os.getenv("PGHOST", "localhost")
-    port = os.getenv("PGPORT", "5432")
-    database = os.getenv("PGDATABASE", "nba_data")
-    user = os.getenv("PGUSER")
-    password = os.getenv("PGPASSWORD")
-
-    if not user:
-        raise ValueError("PGUSER environment variable is required")
-    if not password:
-        raise ValueError("PGPASSWORD environment variable is required")
-
-    sslmode = os.getenv("PGSSLMODE", "")
-    ssl_param = f"?sslmode={sslmode}" if sslmode else ""
-
-    return f"postgresql://{user}:{password}@{host}:{port}/{database}{ssl_param}"
+def get_connection_string(direct: bool = False) -> str:
+    """Return the Neon connection string from NBA_DATABASE_URL(_DIRECT)."""
+    var = "NBA_DATABASE_URL_DIRECT" if direct else "NBA_DATABASE_URL"
+    url = os.getenv(var)
+    if not url:
+        raise ValueError(f"{var} environment variable is required")
+    return url
 
 
-def get_engine():
-    """Create and return a SQLAlchemy engine."""
-    return create_engine(get_connection_string())
+def get_engine(direct: bool = False):
+    """Create and return a SQLAlchemy engine. Pass direct=True for DDL/migrations."""
+    return create_engine(get_connection_string(direct=direct))
 
 
 def ensure_schema(engine) -> None:
