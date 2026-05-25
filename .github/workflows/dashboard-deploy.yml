@@ -1,0 +1,26 @@
+name: Deploy Dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dashboard/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Push dashboard/ to nba-dashboard repo
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.DASHBOARD_DEPLOY_TOKEN }}
+        with:
+          source-directory: dashboard
+          destination-github-username: abdirahman2ali
+          destination-repository-name: nba-dashboard
+          target-branch: main
+          commit-message: "Deploy dashboard from nba-analytics@${{ github.sha }}"

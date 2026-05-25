@@ -1,0 +1,25 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+
+# dbt
+transform/target/
+transform/dbt_packages/
+transform/logs/
+transform/profiles.yml
+
+# ClickHouse runtime artifacts
+access/
+metadata/
+preprocessed_configs/
+status
+uuid
