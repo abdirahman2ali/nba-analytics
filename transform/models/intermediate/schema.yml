@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: int_player_season_totals
+    description: "Intermediate model with season totals for players, handling multi-team seasons by using combined (2TM) stats. Contains season totals (not per-game averages) for all statistical categories."
+    columns:
+      - name: player_season_id
+        description: "Primary key - unique identifier for each player-season record"
+        tests:
+          - unique
+          - not_null
+      
+      - name: player_id
+        description: "Basketball Reference unique player identifier"
+        tests:
+          - not_null
+      
+      - name: player_name
+        description: "Full name of the player"
+        tests:
+          - not_null
+      
+      - name: season
+        description: "NBA season"
+        tests:
+          - not_null
+      
+      - name: is_two_team_season_flag
+        description: "Boolean flag indicating if player played for multiple teams in the season"
+      
+      - name: total_points
+        description: "Total points scored in the season"
+      
+      - name: total_rebounds
+        description: "Total rebounds in the season"
+      
+      - name: total_assists
+        description: "Total assists in the season"
+      
+      - name: triple_doubles
+        description: "Number of triple-doubles achieved in the season"
+      
+      - name: games_played
+        description: "Number of games played in the season"
+
