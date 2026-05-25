@@ -65,3 +65,13 @@ jobs:
 
       - name: dbt test
         run: dbt test
+
+  investigate-on-failure:
+    needs: [dbt-ci]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger CI investigator
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: gh workflow run watcher.yml --repo abdirahman2ali/ci-investigator
