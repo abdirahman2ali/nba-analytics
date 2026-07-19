@@ -23,16 +23,15 @@ MAX_RETRIES = 3
 def last_complete_season_year() -> int:
     """Return the end year of the last fully completed NBA season.
 
-    NBA seasons end in June. September is when stats are finalized and
-    the new season has not yet started, so running in September will
-    always capture a complete season.
+    NBA Finals end in June. Stats are finalized on Basketball Reference
+    by July, so any run in July or later safely captures a complete season.
 
     Examples:
-        Called in September 2026 → returns 2026 (2025-26 season complete)
-        Called in March 2026    → returns 2025 (2025-26 still in progress)
+        Called in July 2026  → returns 2026 (2025-26 season complete)
+        Called in March 2026 → returns 2025 (2025-26 still in progress)
     """
     today = date.today()
-    return today.year if today.month >= 9 else today.year - 1
+    return today.year if today.month >= 7 else today.year - 1
 
 
 def fetch_with_retry(year: int) -> pd.DataFrame:
