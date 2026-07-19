@@ -1,9 +1,10 @@
 version: 2
 
 sources:
-  - name: nba
+  - name: nba_raw
     description: "Raw NBA data ingested into Databricks"
-    schema: nba
+    catalog: abdirahman_portfolio
+    schema: nba_raw
     tables:
       - name: player_season_totals
         description: "Raw player season totals scraped from Basketball Reference"

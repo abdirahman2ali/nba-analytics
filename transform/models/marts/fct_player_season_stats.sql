@@ -139,7 +139,7 @@ calculated_metrics AS (
         ) AS total_fantasy_points,
 
         awards,
-        created_at
+        loaded_at
 
     FROM base
 ),
