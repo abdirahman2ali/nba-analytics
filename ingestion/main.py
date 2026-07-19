@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 from nba_ingestion.scraper import get_season_stats
 from nba_ingestion.transformer import prepare_for_db, season_label
-from nba_ingestion.loader import ensure_schema, ensure_table, write_to_db, get_last_loaded_year
+from nba_ingestion.loader import ensure_schema, ensure_table, write_to_db, get_last_loaded_year, get_loaded_seasons
 
 if not os.getenv("DATABRICKS_RUNTIME_VERSION"):
     load_dotenv(Path(__file__).parent.parent.parent.parent / ".claude" / ".env")
@@ -63,12 +63,17 @@ def run(start_year=None, end_year: int = None, table_name: str = TABLE_NAME):
         print("Already up to date.")
         return
 
+    loaded_seasons = get_loaded_seasons(table_name)
     successful = 0
     failed = []
 
     for year in range(start_year, end_year + 1):
+        label = season_label(year)
+        if label in loaded_seasons:
+            print(f"Skipping {label} — already loaded")
+            continue
         try:
-            print(f"Fetching {season_label(year)} season... ", end="", flush=True)
+            print(f"Fetching {label} season... ", end="", flush=True)
             df = fetch_with_retry(year)
 
             if df.empty:

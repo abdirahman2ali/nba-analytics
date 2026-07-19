@@ -100,6 +100,24 @@ def get_last_loaded_year(table_name: str = "player_season_totals"):
                 return row[0] if row else None
 
 
+def get_loaded_seasons(table_name: str = "player_season_totals") -> set[str]:
+    query = f"SELECT DISTINCT season FROM {CATALOG}.{INGESTION_SCHEMA}.{table_name}"
+    if _is_databricks():
+        try:
+            rows = _spark().sql(query).collect()
+            return {r[0] for r in rows}
+        except Exception:
+            return set()
+    else:
+        try:
+            with _get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query)
+                    return {r[0] for r in cur.fetchall()}
+        except Exception:
+            return set()
+
+
 def write_to_db(df: pd.DataFrame, table_name: str = "player_season_totals") -> None:
     df = df.copy()
     df["loaded_at"] = pd.Timestamp.now()
