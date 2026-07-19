@@ -19,11 +19,9 @@ jobs:
         working-directory: transform
 
     env:
-      PGHOST: ${{ secrets.PGHOST }}
-      PGDATABASE: ${{ secrets.PGDATABASE }}
-      PGUSER: ${{ secrets.PGUSER }}
-      PGPASSWORD: ${{ secrets.PGPASSWORD }}
-      PGPORT: ${{ secrets.PGPORT }}
+      DATABRICKS_SERVER_HOSTNAME: ${{ secrets.DATABRICKS_SERVER_HOSTNAME }}
+      DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +31,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dbt
-        run: pip install dbt-postgres
+        run: pip install dbt-databricks
 
       - name: Write profiles.yml
         run: |
@@ -43,15 +41,12 @@ jobs:
             target: ci
             outputs:
               ci:
-                type: postgres
-                host: "${PGHOST}"
-                port: ${PGPORT:-5432}
-                dbname: "${PGDATABASE}"
-                user: "${PGUSER}"
-                password: "${PGPASSWORD}"
+                type: databricks
+                host: "${DATABRICKS_SERVER_HOSTNAME}"
+                http_path: "${DATABRICKS_HTTP_PATH}"
+                token: "${DATABRICKS_TOKEN}"
                 schema: nba
-                threads: 4
-                sslmode: require
+                threads: 2
           EOF
 
       - name: Install dbt packages
