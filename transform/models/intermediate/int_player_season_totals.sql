@@ -50,7 +50,7 @@ WITH base AS (
         triple_doubles,
 
         awards,
-        created_at
+        loaded_at
 
     FROM {{ ref('stg_player_season_totals') }}
     WHERE games_played > 0 -- Filter out players with no games played

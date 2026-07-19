@@ -1,9 +1,11 @@
 import os
 import pandas as pd
 
+CATALOG = "abdirahman_portfolio"
+INGESTION_SCHEMA = "nba_raw"
 
-TABLE_DDL = """
-CREATE TABLE IF NOT EXISTS nba.{table_name} (
+TABLE_DDL = f"""
+CREATE TABLE IF NOT EXISTS {CATALOG}.{INGESTION_SCHEMA}.{{table_name}} (
     player_id STRING,
     player STRING,
     age DECIMAL(5,2),
@@ -63,11 +65,13 @@ def _get_connection():
 
 def ensure_schema() -> None:
     if _is_databricks():
-        _spark().sql("CREATE SCHEMA IF NOT EXISTS nba")
+        spark = _spark()
+        spark.sql(f"CREATE CATALOG IF NOT EXISTS {CATALOG}")
+        spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{INGESTION_SCHEMA}")
     else:
         with _get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("CREATE SCHEMA IF NOT EXISTS nba")
+                cur.execute(f"CREATE SCHEMA IF NOT EXISTS {INGESTION_SCHEMA}")
 
 
 def ensure_table(table_name: str = "player_season_totals") -> None:
@@ -81,7 +85,7 @@ def ensure_table(table_name: str = "player_season_totals") -> None:
 
 
 def get_last_loaded_year(table_name: str = "player_season_totals"):
-    query = f"SELECT MAX(CAST(LEFT(season, 4) AS INT) + 1) FROM nba.{table_name}"
+    query = f"SELECT MAX(CAST(LEFT(season, 4) AS INT) + 1) FROM {CATALOG}.{INGESTION_SCHEMA}.{table_name}"
     if _is_databricks():
         try:
             row = _spark().sql(query).collect()[0]
@@ -102,12 +106,12 @@ def write_to_db(df: pd.DataFrame, table_name: str = "player_season_totals") -> N
 
     if _is_databricks():
         spark_df = _spark().createDataFrame(df)
-        spark_df.write.format("delta").mode("append").saveAsTable(f"nba.{table_name}")
+        spark_df.write.format("delta").mode("append").saveAsTable(f"{CATALOG}.{INGESTION_SCHEMA}.{table_name}")
     else:
         cols = list(df.columns)
         placeholders = ", ".join(["?" for _ in cols])
         col_list = ", ".join(cols)
-        insert_sql = f"INSERT INTO nba.{table_name} ({col_list}) VALUES ({placeholders})"
+        insert_sql = f"INSERT INTO {INGESTION_SCHEMA}.{table_name} ({col_list}) VALUES ({placeholders})"
 
         with _get_connection() as conn:
             with conn.cursor() as cur:

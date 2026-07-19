@@ -5,8 +5,8 @@
 }}
 
 SELECT
-    -- Primary key
-    id AS player_season_id,
+    -- Surrogate key
+    md5(concat_ws('-', coalesce(player_id, ''), coalesce(season, ''), coalesce(team, ''))) AS player_season_id,
 
     -- Player information
     player_id,
@@ -62,6 +62,6 @@ SELECT
 
     -- Additional information
     awards,
-    created_at
+    loaded_at
 
-FROM {{ source('nba', 'player_season_totals') }}
+FROM {{ source('nba_raw', 'player_season_totals') }}

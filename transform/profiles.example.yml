@@ -6,5 +6,6 @@ nba_dbt:
       host: "{{ env_var('DATABRICKS_SERVER_HOSTNAME') }}"
       http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
       token: "{{ env_var('DATABRICKS_TOKEN') }}"
-      schema: nba
+      catalog: abdirahman_portfolio
+      schema: nba_dbt
       threads: 2

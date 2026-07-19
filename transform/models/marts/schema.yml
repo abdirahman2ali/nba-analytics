@@ -232,8 +232,8 @@ models:
       - name: awards
         description: "Awards won during the season (if any)"
       
-      - name: created_at
-        description: "Timestamp when the record was created in the source system"
+      - name: loaded_at
+        description: "Timestamp when the record was loaded into the raw table"
 
   - name: fct_season_league_averages
     description: >
