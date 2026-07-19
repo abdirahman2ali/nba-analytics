@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 """
 NBA Analytics Dashboard Generator
-Queries Neon PostgreSQL and outputs a self-contained interactive HTML dashboard.
+Queries Databricks and outputs a self-contained interactive HTML dashboard.
 """
 import os
 import json
 from decimal import Decimal
 from pathlib import Path
 from dotenv import load_dotenv
-import psycopg2
-from psycopg2.extras import RealDictCursor
+from databricks import sql as dbsql
 
-ENV_PATH = Path(__file__).parent.parent / 'nba-ingestion-pipeline' / '.env'
-load_dotenv(ENV_PATH)
+load_dotenv(Path(__file__).resolve().parents[3] / ".claude" / ".env")
 
 
 def to_serializable(obj):
@@ -21,19 +19,19 @@ def to_serializable(obj):
     return obj
 
 
-def rows_to_dicts(rows):
-    return [{k: to_serializable(v) for k, v in row.items()} for row in rows]
+def rows_to_dicts(cursor) -> list[dict]:
+    cols = [desc[0] for desc in cursor.description]
+    return [
+        {k: to_serializable(v) for k, v in zip(cols, row)}
+        for row in cursor.fetchall()
+    ]
 
 
 def main():
-    conn = psycopg2.connect(
-        host=os.getenv('PGHOST'),
-        port=os.getenv('PGPORT'),
-        dbname=os.getenv('PGDATABASE'),
-        user=os.getenv('PGUSER'),
-        password=os.getenv('PGPASSWORD'),
-        sslmode=os.getenv('PGSSLMODE'),
-        cursor_factory=RealDictCursor
+    conn = dbsql.connect(
+        server_hostname=os.environ["DATABRICKS_SERVER_HOSTNAME"],
+        http_path=os.environ["DATABRICKS_HTTP_PATH"],
+        access_token=os.environ["DATABRICKS_TOKEN"],
     )
     cur = conn.cursor()
 
@@ -49,9 +47,9 @@ def main():
         from nba_marts.fct_season_league_averages
         order by season_year
     """)
-    league_trends = rows_to_dicts(cur.fetchall())
+    league_trends = rows_to_dicts(cur)
 
-    # Career leaders — top 25, 400+ games
+    # Career leaders — top 10, 400+ games
     cur.execute("""
         select
             player_name,
@@ -70,9 +68,9 @@ def main():
         order by career_ppg desc
         limit 10
     """)
-    career_leaders = rows_to_dicts(cur.fetchall())
+    career_leaders = rows_to_dicts(cur)
 
-    # Career RPG leaders — top 20, 400+ games
+    # Career RPG leaders — top 10, 400+ games
     cur.execute("""
         select
             player_name,
@@ -89,9 +87,9 @@ def main():
         order by career_rpg desc
         limit 10
     """)
-    career_rpg_leaders = rows_to_dicts(cur.fetchall())
+    career_rpg_leaders = rows_to_dicts(cur)
 
-    # Career APG leaders — top 20, 400+ games
+    # Career APG leaders — top 10, 400+ games
     cur.execute("""
         select
             player_name,
@@ -108,7 +106,7 @@ def main():
         order by career_apg desc
         limit 10
     """)
-    career_apg_leaders = rows_to_dicts(cur.fetchall())
+    career_apg_leaders = rows_to_dicts(cur)
 
     # Multi-season stats for interactive filters (1990+, all qualifying players)
     cur.execute("""
@@ -132,7 +130,7 @@ def main():
         where season_year >= 1990
         order by season_year desc, points_per_game desc
     """)
-    season_stats = rows_to_dicts(cur.fetchall())
+    season_stats = rows_to_dicts(cur)
 
     # All-time single-season scoring record
     cur.execute("""
@@ -141,12 +139,13 @@ def main():
         order by points_per_game desc
         limit 1
     """)
-    top_season = rows_to_dicts(cur.fetchall())[0]
+    top_season = rows_to_dicts(cur)[0]
 
     # Total unique players
     cur.execute("select count(distinct player_id) as n from nba_marts.fct_player_season_stats")
-    total_players = int(cur.fetchone()['n'])
+    total_players = int(cur.fetchone()[0])
 
+    cur.close()
     conn.close()
 
     # Era summary
@@ -585,7 +584,7 @@ footer {{
       <div class="header-div"></div>
       <span class="header-sub">75 Years of Player Performance &nbsp;·&nbsp; 1949–2025</span>
     </div>
-    <span class="header-meta">Basketball Reference &nbsp;·&nbsp; dbt + PostgreSQL</span>
+    <span class="header-meta">Basketball Reference &nbsp;·&nbsp; dbt + Databricks</span>
   </div>
 </header>
 <div class="accent-bar"></div>
@@ -822,7 +821,7 @@ footer {{
 </div>
 <footer>
   <div class="footer-inner">
-    <span>Data: Basketball Reference &nbsp;&middot;&nbsp; Pipeline: Python + PostgreSQL (Neon) + dbt &nbsp;&middot;&nbsp; Dashboard: HTML + Chart.js</span>
+    <span>Data: Basketball Reference &nbsp;&middot;&nbsp; Pipeline: Python + Databricks + dbt &nbsp;&middot;&nbsp; Dashboard: HTML + Chart.js</span>
     <span>Abdirahman Ali &nbsp;&middot;&nbsp; 2025</span>
   </div>
 </footer>

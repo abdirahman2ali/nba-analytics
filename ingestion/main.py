@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 
 from nba_ingestion.scraper import get_season_stats
 from nba_ingestion.transformer import prepare_for_db, season_label
-from nba_ingestion.loader import get_engine, ensure_schema, ensure_table, write_to_db, get_last_loaded_year
+from nba_ingestion.loader import ensure_schema, ensure_table, write_to_db, get_last_loaded_year
 
-load_dotenv(Path(__file__).parent.parent.parent / ".claude" / ".env")
+load_dotenv(Path(__file__).parent.parent.parent.parent / ".claude" / ".env")
 load_dotenv()
 
 START_YEAR = 1950
@@ -47,15 +47,14 @@ def fetch_with_retry(year: int) -> pd.DataFrame:
 
 
 def run(start_year=None, end_year: int = None, table_name: str = TABLE_NAME):
-    engine = get_engine()
-    ensure_schema(engine)
-    ensure_table(engine, table_name)
+    ensure_schema()
+    ensure_table(table_name)
 
     if end_year is None:
         end_year = last_complete_season_year()
 
     if start_year is None:
-        last_loaded = get_last_loaded_year(engine, table_name)
+        last_loaded = get_last_loaded_year(table_name)
         start_year = START_YEAR if last_loaded is None else last_loaded + 1
 
     if start_year > end_year:
@@ -76,7 +75,7 @@ def run(start_year=None, end_year: int = None, table_name: str = TABLE_NAME):
                 continue
 
             df_db = prepare_for_db(df, year)
-            write_to_db(df_db, engine, table_name)
+            write_to_db(df_db, table_name)
             print(f"{len(df):,} players saved")
             successful += 1
 
