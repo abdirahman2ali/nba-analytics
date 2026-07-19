@@ -5,7 +5,6 @@ from databricks import sql as dbsql
 
 TABLE_DDL = """
 CREATE TABLE IF NOT EXISTS nba.{table_name} (
-    id BIGINT GENERATED ALWAYS AS IDENTITY,
     player_id STRING,
     player STRING,
     age DECIMAL(5,2),
@@ -39,7 +38,7 @@ CREATE TABLE IF NOT EXISTS nba.{table_name} (
     two_p_pct DECIMAL(5,3),
     efg_pct DECIMAL(5,3),
     trp_dbl INT,
-    created_at TIMESTAMP DEFAULT current_timestamp()
+    loaded_at TIMESTAMP
 )
 USING DELTA
 """
@@ -84,7 +83,9 @@ def get_last_loaded_year(table_name: str = "player_season_totals"):
 
 def write_to_db(df: pd.DataFrame, table_name: str = "player_season_totals") -> None:
     """Append a DataFrame to the target Delta table in chunks."""
-    cols = [c for c in df.columns]
+    df = df.copy()
+    df["loaded_at"] = pd.Timestamp.now()
+    cols = list(df.columns)
     placeholders = ", ".join(["?" for _ in cols])
     col_list = ", ".join(cols)
     insert_sql = f"INSERT INTO nba.{table_name} ({col_list}) VALUES ({placeholders})"
@@ -93,5 +94,12 @@ def write_to_db(df: pd.DataFrame, table_name: str = "player_season_totals") -> N
         with conn.cursor() as cur:
             chunk_size = 500
             records = df.where(pd.notnull(df), None).values.tolist()
+            # pandas upcasts INT columns with NaN to float64; fix at record level
+            # after df.where() so dtype inference can't undo the conversion.
+            int_cols = {col: cols.index(col) for col in ("trp_dbl",) if col in cols}
+            for rec in records:
+                for col, idx in int_cols.items():
+                    if rec[idx] is not None:
+                        rec[idx] = int(rec[idx])
             for i in range(0, len(records), chunk_size):
                 cur.executemany(insert_sql, records[i : i + chunk_size])

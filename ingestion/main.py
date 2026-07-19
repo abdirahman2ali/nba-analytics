@@ -8,7 +8,7 @@ from nba_ingestion.scraper import get_season_stats
 from nba_ingestion.transformer import prepare_for_db, season_label
 from nba_ingestion.loader import ensure_schema, ensure_table, write_to_db, get_last_loaded_year
 
-load_dotenv(Path(__file__).parent.parent.parent / ".claude" / ".env")
+load_dotenv(Path(__file__).parent.parent.parent.parent / ".claude" / ".env")
 load_dotenv()
 
 START_YEAR = 1950

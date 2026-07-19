@@ -10,7 +10,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from databricks import sql as dbsql
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".claude" / ".env")
+load_dotenv(Path(__file__).resolve().parents[3] / ".claude" / ".env")
 
 
 def to_serializable(obj):
