@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-from databricks import sql as dbsql
 
 
 TABLE_DDL = """
@@ -44,62 +43,80 @@ USING DELTA
 """
 
 
+def _is_databricks() -> bool:
+    return "DATABRICKS_RUNTIME_VERSION" in os.environ
+
+
+def _spark():
+    from pyspark.sql import SparkSession
+    return SparkSession.builder.getOrCreate()
+
+
 def _get_connection():
-    """Open a Databricks SQL connection using env vars."""
-    hostname = os.environ["DATABRICKS_SERVER_HOSTNAME"]
-    http_path = os.environ["DATABRICKS_HTTP_PATH"]
-    token = os.environ["DATABRICKS_TOKEN"]
+    from databricks import sql as dbsql
     return dbsql.connect(
-        server_hostname=hostname,
-        http_path=http_path,
-        access_token=token,
+        server_hostname=os.environ["DATABRICKS_SERVER_HOSTNAME"],
+        http_path=os.environ["DATABRICKS_HTTP_PATH"],
+        access_token=os.environ["DATABRICKS_TOKEN"],
     )
 
 
 def ensure_schema() -> None:
-    """Create the nba schema if it does not exist."""
-    with _get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("CREATE SCHEMA IF NOT EXISTS nba")
+    if _is_databricks():
+        _spark().sql("CREATE SCHEMA IF NOT EXISTS nba")
+    else:
+        with _get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("CREATE SCHEMA IF NOT EXISTS nba")
 
 
 def ensure_table(table_name: str = "player_season_totals") -> None:
-    """Create the player season totals Delta table if it does not exist."""
-    with _get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(TABLE_DDL.format(table_name=table_name))
+    ddl = TABLE_DDL.format(table_name=table_name)
+    if _is_databricks():
+        _spark().sql(ddl)
+    else:
+        with _get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(ddl)
 
 
 def get_last_loaded_year(table_name: str = "player_season_totals"):
-    """Return the season end year of the most recently loaded season, or None if the table is empty."""
-    with _get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"SELECT MAX(CAST(LEFT(season, 4) AS INT) + 1) FROM nba.{table_name}"
-            )
-            row = cur.fetchone()
-            return row[0] if row else None
+    query = f"SELECT MAX(CAST(LEFT(season, 4) AS INT) + 1) FROM nba.{table_name}"
+    if _is_databricks():
+        try:
+            row = _spark().sql(query).collect()[0]
+            return row[0]
+        except Exception:
+            return None
+    else:
+        with _get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                row = cur.fetchone()
+                return row[0] if row else None
 
 
 def write_to_db(df: pd.DataFrame, table_name: str = "player_season_totals") -> None:
-    """Append a DataFrame to the target Delta table in chunks."""
     df = df.copy()
     df["loaded_at"] = pd.Timestamp.now()
-    cols = list(df.columns)
-    placeholders = ", ".join(["?" for _ in cols])
-    col_list = ", ".join(cols)
-    insert_sql = f"INSERT INTO nba.{table_name} ({col_list}) VALUES ({placeholders})"
 
-    with _get_connection() as conn:
-        with conn.cursor() as cur:
-            chunk_size = 500
-            records = df.where(pd.notnull(df), None).values.tolist()
-            # pandas upcasts INT columns with NaN to float64; fix at record level
-            # after df.where() so dtype inference can't undo the conversion.
-            int_cols = {col: cols.index(col) for col in ("trp_dbl",) if col in cols}
-            for rec in records:
-                for col, idx in int_cols.items():
-                    if rec[idx] is not None:
-                        rec[idx] = int(rec[idx])
-            for i in range(0, len(records), chunk_size):
-                cur.executemany(insert_sql, records[i : i + chunk_size])
+    if _is_databricks():
+        spark_df = _spark().createDataFrame(df)
+        spark_df.write.format("delta").mode("append").saveAsTable(f"nba.{table_name}")
+    else:
+        cols = list(df.columns)
+        placeholders = ", ".join(["?" for _ in cols])
+        col_list = ", ".join(cols)
+        insert_sql = f"INSERT INTO nba.{table_name} ({col_list}) VALUES ({placeholders})"
+
+        with _get_connection() as conn:
+            with conn.cursor() as cur:
+                chunk_size = 500
+                records = df.where(pd.notnull(df), None).values.tolist()
+                int_cols = {col: cols.index(col) for col in ("trp_dbl",) if col in cols}
+                for rec in records:
+                    for col, idx in int_cols.items():
+                        if rec[idx] is not None:
+                            rec[idx] = int(rec[idx])
+                for i in range(0, len(records), chunk_size):
+                    cur.executemany(insert_sql, records[i : i + chunk_size])
